@@ -24,6 +24,6 @@ server.on('error', function (err, buff, req, res) {
   console.log(err.stack);
 });
 
-console.log('Listening on ' + 53);
-server.serve(53);
+console.log('Listening on ' + 5353);
+server.serve(5353);
 
