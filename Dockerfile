@@ -13,4 +13,9 @@ RUN apt-get install -qy curl
 RUN curl -sSL https://get.docker.com/ | sh
 
 #https://github.com/tjfontaine/node-dns
+RUN mkdir /app
+COPY docker-dns.js /app/
+CMD node /app/docker-dns.js
+VOLUME /var/run/docker.sock
+PORT 53
 
