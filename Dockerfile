@@ -17,5 +17,5 @@ RUN mkdir /app
 COPY docker-dns.js /app/
 CMD node /app/docker-dns.js
 VOLUME /var/run/docker.sock
-PORT 53
+EXPOSE 53
 
