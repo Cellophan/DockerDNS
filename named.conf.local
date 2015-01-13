@@ -1,0 +1,23 @@
+//
+// Do any local configuration here
+//
+
+// Consider adding the 1918 zones here, if they are not used in your
+// organization
+//include "/etc/bind/zones.rfc1918";
+
+zone "docker." { 
+  type forward; 
+  forwarders { 127.0.0.1 port 5353; }; 
+}; 
+
+
+// Remove if not logs are needed
+logging {
+    channel default {
+        stderr;
+        severity debug;
+    };
+    category default { default; };
+};
+
