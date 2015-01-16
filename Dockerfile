@@ -23,7 +23,8 @@ EXPOSE 53
 #Install app
 #app inspired from https://github.com/tjfontaine/node-dns
 RUN mkdir /app
-RUN cd /app; npm install native-dns
+RUN cd /app; npm install native-dns dateformat
 COPY docker-dns.js /app/
 
-CMD node /app/docker-dns.js
+COPY start.sh /
+CMD /start.sh

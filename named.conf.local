@@ -7,8 +7,9 @@
 //include "/etc/bind/zones.rfc1918";
 
 zone "docker." { 
-  type forward; 
-  forwarders { 127.0.0.1 port 5353; }; 
+  type slave; 
+  masters { 127.0.0.1 port 5353; }; 
+  file "/var/lib/bind/db.docker";
 }; 
 
 
