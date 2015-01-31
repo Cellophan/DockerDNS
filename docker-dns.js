@@ -14,8 +14,7 @@ var ipaddresses = [];
 Object.keys(ifaces).forEach(function (name) {
   ifaces[name].forEach(function (connection) {
     if ('IPv4' !== connection.family || connection.internal !== false) {
-      return;
-    }
+      return; }
 
     ipaddresses.push(connection.address);
   });
@@ -37,24 +36,25 @@ function sendAnswer(response, answer) {
       ttl: "30",
       address: ip }))
    })
+  response.header.aa = true;
   response.send()
 }
 
 var server = dns.createServer();
 
 server.on('request', function (request, response) {
-	// Printing the requests received
-	request.question.forEach( function (q) {
-		console.log('docker-dns.js: question: ' + q.name + ' ' + dns.consts.QTYPE_TO_NAME[q.type]);
-	})
+  // Printing the requests received
+  request.question.forEach( function (q) {
+    console.log('docker-dns.js: question: ' + q.name + ' ' + dns.consts.QTYPE_TO_NAME[q.type]);
+  })
 
-  // This program respond to only the first question
+  // This program responds to only the first question
   var question = request.question[0]
-	// Extractingthe name from the DNS request
-	var domain = question.name
-	var regex = /([-_.a-z]*).docker.?/i;
-	var name = domain.match(regex);
-  if (dns.consts.QTYPE_TO_NAME[question.type]) {
+  // Extractingthe name from the DNS request
+  var domain = question.name
+  var regex = /([-_.a-z]*).docker.?/i;
+  var name = domain.match(regex);
+  if ("SOA" == dns.consts.QTYPE_TO_NAME[question.type]) {
     sendAnswer(response, dns.SOA({
       name: "docker.",
       // This TTL could be more if the script notify the slave of an update, but it's not implemented
@@ -68,17 +68,17 @@ server.on('request', function (request, response) {
       minimum: 30
     }))
   } else if (name) {
-		// TODO: Should detect ns here.
-		// Asking docker to know what is the IP the container with this name
-		exec("docker inspect -f '{{.NetworkSettings.IPAddress}}' " + name[1].trim(), function (error, stdout, stderr) {
-			// Error cases not managed
-			if (stdout) {
+    // TODO: Should detect ns here.
+    // Asking docker to know what is the IP the container with this name
+    exec("docker inspect -f '{{.NetworkSettings.IPAddress}}' " + name[1].trim(), function (error, stdout, stderr) {
+      // Error cases not managed
+      if (stdout) {
         sendAnswer(response, dns.A({
-					name: domain,
-					ttl: 30,
-					address: stdout.trim() }))
+          name: domain,
+          ttl: 30,
+          address: stdout.trim() }))
       } else {
-	      response.send() }
+        response.send() }
     });
 	} else {
 		response.send(); }
