@@ -11,5 +11,5 @@ docker-dns.js listens on port 5353 and resolves DNS name <container name>.docker
 
 Status
 =========
-The SOA respons of the script is not accepted by bind...
+The AXFR response is not handled (and the server is not listening on TCP).
 
