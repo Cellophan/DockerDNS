@@ -9,7 +9,7 @@ docker-dns.js listens on port 5353 and resolves DNS name <container name>.docker
 * Build it with: docker build -t dockerdns https://github.com/Cellophan/DockerDNS.git
 * Run it with: docker run --rm -ti --publish-all -v /var/run/docker.sock:/var/run/docker.sock dockerdns
 
-To Do
+Status
 =========
-Add bind for true DNS server and just add the .docker zone.
+The AXFR response is not handled (and the server is not listening on TCP).
 
