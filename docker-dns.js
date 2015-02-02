@@ -3,27 +3,33 @@
 var dns = require('native-dns');
 var util = require('util');
 var exec = require('child_process').exec;
-//var execSync = require('child_process').execSync;
-var execSync = require("exec-sync");
 
 var dateFormat = require('dateformat');
 
 var os = require('os');
 var ifaces = os.networkInterfaces();
 
-var DNSEntries = []
+var NSEntry = dns.NS({
+  name: "docker.",
+  ttl: "30",
+  data: "ns.docker."
+})
+
+var NSAs = []
 // Getting the Ips of the OS
 Object.keys(ifaces).forEach(function (name) {
   ifaces[name].forEach(function (connection) {
     if ('IPv4' !== connection.family || connection.internal !== false) {
       return; }
 
-    DNSEntries.push(dns.A({
+    NSAs.push(dns.A({
       name: "ns.docker.",
       ttl: "30",
       address: connection.address }));
   });
 });
+
+//console.log(DNSEntries)
 
 function serverOnRequest (request, response) {
   // Printing the requests received
@@ -32,12 +38,9 @@ function serverOnRequest (request, response) {
   })
 
   // Adding authority field
-  response.authority.push(dns.NS({
-    name: "docker.",
-    ttl: "30",
-    data: "ns.docker." }))
+  response.authority.push(NSEntry)
   // Adding additional field
-  response.additional.concat(DNSEntries)
+  response.additional.concat(NSAs)
   // This repsonse is authoritative
   response.header.aa = true;
 
@@ -47,7 +50,7 @@ function serverOnRequest (request, response) {
     ttl: 30,
     primary: "ns.docker.",
     admin: "postmaster.docker.",
-    serial: dateFormat(new Date(), "yyyymmddhh"),
+    serial: dateFormat(new Date(), "mmddhhMMss"),
     refresh: 30,
     retry: 30,
     expiration: 30,
@@ -63,19 +66,23 @@ function serverOnRequest (request, response) {
 
     if ("AXFR" == dns.consts.QTYPE_TO_NAME[question.type]) {
       response.answer.push(SOAEntry)
+      response.answer.push(NSEntry)
+      NSAs.forEach( function (entry) {
+        response.answer.push(entry); })
       exec("docker inspect -f '{{.Name}} {{.NetworkSettings.IPAddress}}' $(docker ps -aq)", function (error, stdout, stderr) {
         // Error cases not managed
         if (stdout) {
           stdout.trim().split("\n").forEach( function (line) {
             var splitted = line.replace(/\//, '').split(/ /)
-            if (String(splitted[1]).length > 0) {
-              console.log('match:' + line + 'a' + String(splitted[1]).length)
+            //Filter out reponses which are empty or with a _
+            if (String(splitted[1]).length > 0 && ! splitted[0].match(/_/)) {
               response.answer.push(dns.A({
-                name: splitted[0] + '.docker',
+                name: splitted[0] + '.docker.',
                 ttl: 30,
                 address: splitted[1] }))
             }
           })
+          response.answer.push(SOAEntry);
           response.send();
         }
       })
@@ -88,17 +95,23 @@ function serverOnRequest (request, response) {
       var name = domain.match(regex);
 
       // TODO: Should detect ns here.
-      // Asking docker to know what is the IP the container with this name
-      exec("docker inspect -f '{{.NetworkSettings.IPAddress}}' " + name[1].trim(), function (error, stdout, stderr) {
-        // Error cases not managed
-        if (stdout) {
-          response.answer.push(dns.A({
-            name: domain,
-            ttl: 30,
-            address: stdout.trim() }))
-          response.send();
-        }
-      });
+      if ('ns' == name) {
+        NSAs.forEach( function (entry) {
+          response.answer.push(entry); })
+        response.send();
+      } else {
+        // Asking docker to know what is the IP the container with this name
+        exec("docker inspect -f '{{.NetworkSettings.IPAddress}}' " + name[1].trim(), function (error, stdout, stderr) {
+          // Error cases not managed
+          if (stdout) {
+            response.answer.push(dns.A({
+              name: domain,
+              ttl: 30,
+              address: stdout.trim() }))
+            response.send();
+          }
+        });
+      }
     }
   });
 };
@@ -111,6 +124,7 @@ var serverUDP = dns.createUDPServer();
 serverUDP.on('request', serverOnRequest);
 serverUDP.on('error', serverOnError);
 serverUDP.on('listening', function () { console.log("Listening on UDP") })
+
 var serverTCP = dns.createTCPServer();
 serverTCP.on('request', serverOnRequest);
 serverTCP.on('error', serverOnError);
