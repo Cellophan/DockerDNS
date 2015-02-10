@@ -1,7 +1,8 @@
 FROM debian:stable
 
 #Install nodejs
-RUN apt-get update; apt-get install -qy python g++ make checkinstall fakeroot wget
+RUN apt-get update && \
+    apt-get install -qy python g++ make checkinstall fakeroot wget
 RUN src=$(mktemp -d) && cd $src ;\
   wget -N http://nodejs.org/dist/node-latest.tar.gz &&\
   tar xzvf node-latest.tar.gz && cd node-v* &&\
