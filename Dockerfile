@@ -16,7 +16,7 @@ RUN curl -sSL https://get.docker.com/ | sh
 #VOLUME /var/run/docker.sock
 
 #Install bind9
-RUN apt-get install -qy bind9 dnsutils
+RUN apt-get install -qy bind9 dnsutils syslogd
 COPY named.conf.local /etc/bind/
 RUN sed -i '/dnssec-validation/d' /etc/bind/named.conf.options
 EXPOSE 53
@@ -24,7 +24,7 @@ EXPOSE 53
 #Install app
 #app inspired from https://github.com/tjfontaine/node-dns
 RUN mkdir /app
-RUN cd /app; npm install native-dns dateformat
+RUN cd /app; npm install native-dns dateformat forever
 COPY docker-dns.js /app/
 
 COPY start.sh /

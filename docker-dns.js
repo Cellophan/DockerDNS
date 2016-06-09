@@ -15,6 +15,7 @@ var NSEntry = dns.NS({
   data: "ns.docker."
 })
 
+var Slaves = []
 var NSAs = []
 // Getting the Ips of the OS
 Object.keys(ifaces).forEach(function (name) {
@@ -51,8 +52,8 @@ function serverOnRequest (request, response) {
     primary: "ns.docker.",
     admin: "postmaster.docker.",
     serial: dateFormat(new Date(), "mmddhhMMss"),
-    refresh: 30,
-    retry: 30,
+    refresh: 10,
+    retry: 3,
     expiration: 30,
     minimum: 30
   })
@@ -64,7 +65,10 @@ function serverOnRequest (request, response) {
       response.send();
     }
 
-    if ("AXFR" == dns.consts.QTYPE_TO_NAME[question.type]) {
+    if ("AXFR" == dns.consts.QTYPE_TO_NAME[question.type] || "IXFR" == dns.consts.QTYPE_TO_NAME[question.type]) {
+      if (! Slaves.inArray(response.address))
+        Slaves.push(response.address)
+
       response.answer.push(SOAEntry)
       response.answer.push(NSEntry)
       NSAs.forEach( function (entry) {
