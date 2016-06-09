@@ -1,3 +1,6 @@
+# DEPRECATED
+This project was just a reason to play a bit with nodejs. Now that docker has an impeded DNS (and that some LB start to be interesting (look at traefik)), this repo is useless.
+
 # README.md
 Resolve IP address of container based on them names.
 
